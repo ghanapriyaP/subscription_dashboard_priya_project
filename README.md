@@ -101,7 +101,7 @@ assign-subbu-anna/
 
 ```bash
 git clone <your-repo-url>
-cd assign-subbu-anna
+cd folder name
 ```
 
 ---
