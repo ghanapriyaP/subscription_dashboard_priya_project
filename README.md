@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Tool Subscription Management Dashboard
 
 A full-stack backend system to **track, manage, and optimize** your organization's software tool subscriptions — with an AI-powered assistant, real-time analytics, and automated renewal reminders.
