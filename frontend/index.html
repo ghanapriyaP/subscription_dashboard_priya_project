@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToolTrack — Subscription Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { background: #f1f5f9; }
+
+    /* Sidebar */
+    .sidebar { background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); }
+    .nav-link { display: flex; align-items: center; gap: 11px; padding: 11px 14px; border-radius: 12px; color: #94a3b8; cursor: pointer; transition: all 0.18s; font-size: 13.5px; font-weight: 500; user-select: none; }
+    .nav-link:hover { color: #e2e8f0; background: rgba(255,255,255,0.08); }
+    .nav-link.active { color: #fff; background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 4px 15px rgba(99,102,241,0.4); }
+    .nav-link i { width: 17px; text-align: center; font-size: 14px; }
+    .nav-section-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #475569; padding: 0 14px; margin: 18px 0 6px; }
+
+    /* KPI Cards */
+    .kpi-card { background: #fff; border-radius: 18px; padding: 22px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 20px rgba(0,0,0,0.04); transition: transform .2s, box-shadow .2s; border: 1px solid rgba(226,232,240,0.8); }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+    .kpi-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
+
+    /* Gradient cards */
+    .card-gradient-indigo { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; }
+    .card-gradient-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+    .card-gradient-amber { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+    .card-gradient-rose { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color: white; }
+    .card-gradient-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
+    .card-gradient-violet { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; }
+
+    /* Table */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table thead th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; background: #f8fafc; white-space: nowrap; }
+    .data-table thead th:first-child { border-radius: 10px 0 0 10px; }
+    .data-table thead th:last-child { border-radius: 0 10px 10px 0; }
+    .data-table tbody td { padding: 13px 16px; font-size: 13px; color: #334155; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover td { background: #fafbff; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; gap: 4px; }
+    .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+    .badge-active { background: #dcfce7; color: #15803d; } .badge-active::before { background: #22c55e; }
+    .badge-inactive { background: #f1f5f9; color: #64748b; } .badge-inactive::before { background: #94a3b8; }
+    .badge-cancelled { background: #fee2e2; color: #dc2626; } .badge-cancelled::before { background: #ef4444; }
+    .badge-monthly { background: #dbeafe; color: #2563eb; }
+    .badge-yearly { background: #ede9fe; color: #7c3aed; }
+    .badge-overdue { background: #fef3c7; color: #b45309; } .badge-overdue::before { background: #f59e0b; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; border: none; cursor: pointer; transition: all .15s; border-radius: 10px; }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; font-size: 13px; padding: 9px 20px; box-shadow: 0 2px 8px rgba(99,102,241,0.35); }
+    .btn-primary:hover { background: linear-gradient(135deg, #4f46e5, #4338ca); box-shadow: 0 4px 14px rgba(99,102,241,0.45); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .6; cursor: default; transform: none; box-shadow: none; }
+    .btn-secondary { background: #f1f5f9; color: #475569; font-size: 13px; padding: 9px 20px; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-sm-edit { background: #eef2ff; color: #6366f1; font-size: 12px; padding: 6px 11px; border-radius: 8px; }
+    .btn-sm-edit:hover { background: #e0e7ff; }
+    .btn-sm-del { background: #fef2f2; color: #dc2626; font-size: 12px; padding: 6px 11px; border-radius: 8px; }
+    .btn-sm-del:hover { background: #fee2e2; }
+    .btn-icon { background: transparent; color: #94a3b8; padding: 6px 8px; border-radius: 8px; }
+    .btn-icon:hover { background: #f1f5f9; color: #6366f1; }
+
+    /* Form inputs */
+    .input-field { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 9px 13px; font-size: 13px; outline: none; transition: border-color .15s, box-shadow .15s; color: #334155; background: #fff; }
+    .input-field:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+    .input-field::placeholder { color: #c0c9d6; }
+    select.input-field { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 34px; }
+    .input-label { display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 5px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.6); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 16px; }
+    .modal-box { background: #fff; border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.2); max-height: 92vh; overflow-y: auto; }
+
+    /* Toast */
+    .toast { position: fixed; top: 22px; right: 22px; z-index: 9999; min-width: 270px; max-width: 400px; padding: 14px 18px; border-radius: 14px; font-size: 13.5px; font-weight: 500; display: flex; align-items: center; gap: 11px; animation: slideIn 0.22s ease; }
+    .toast-success { background: #f0fdf4; color: #166534; border: 1px solid #86efac; box-shadow: 0 8px 30px rgba(34,197,94,0.15); }
+    .toast-error { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; box-shadow: 0 8px 30px rgba(239,68,68,0.15); }
+    .toast-info { background: #eff6ff; color: #1e40af; border: 1px solid #93c5fd; box-shadow: 0 8px 30px rgba(59,130,246,0.15); }
+    @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* Chat */
+    .msg-user { margin-left: auto; background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; border-radius: 18px 18px 4px 18px; padding: 11px 16px; max-width: 74%; font-size: 13.5px; line-height: 1.65; word-break: break-word; box-shadow: 0 2px 10px rgba(99,102,241,0.3); }
+    .msg-bot { margin-right: auto; background: #fff; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 18px 18px 18px 4px; padding: 11px 16px; max-width: 74%; font-size: 13.5px; line-height: 1.65; box-shadow: 0 2px 8px rgba(0,0,0,0.06); word-break: break-word; white-space: pre-wrap; }
+    .msg-time { font-size: 10.5px; color: #94a3b8; margin-top: 3px; }
+    .typing-dot { width: 7px; height: 7px; background: #94a3b8; border-radius: 50%; animation: bounce 1.2s ease-in-out infinite; }
+    .typing-dot:nth-child(2) { animation-delay: .2s; } .typing-dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Spinner */
+    .spin { animation: rot 0.75s linear infinite; }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* Progress bar */
+    .progress-bar { height: 6px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 999px; transition: width .5s ease; }
+
+    /* Auth screen */
+    .auth-bg { background: radial-gradient(ellipse at 20% 50%, #1e1b4b 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #312e81 0%, transparent 60%), linear-gradient(135deg, #0f172a, #1e293b); }
+
+    /* Section card */
+    .section-card { background: #fff; border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 20px rgba(0,0,0,0.04); border: 1px solid rgba(226,232,240,0.8); }
+
+    /* Stat row */
+    .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f1f5f9; }
+    .stat-row:last-child { border-bottom: none; }
+
+    /* Alert banner */
+    .alert-banner { border-radius: 12px; padding: 13px 16px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px; }
+    .alert-warning { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+    .alert-danger { background: #fff1f2; border: 1px solid #fda4af; color: #9f1239; }
+    .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+
+    /* Quick prompt chip */
+    .prompt-chip { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; color: #6366f1; font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap; }
+    .prompt-chip:hover { background: #eef2ff; border-color: #a5b4fc; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state .icon { font-size: 40px; color: #e2e8f0; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 15px; font-weight: 600; color: #94a3b8; }
+    .empty-state p { font-size: 13px; color: #cbd5e1; margin-top: 4px; }
+
+    /* Renewal indicator */
+    .renewal-urgent { color: #dc2626; font-weight: 600; }
+    .renewal-soon { color: #d97706; font-weight: 600; }
+    .renewal-ok { color: #64748b; }
+
+    /* Top bar */
+    .topbar { background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(226,232,240,0.8); }
+
+    /* Tooltip-like info chip */
+    .info-chip { display: inline-flex; align-items: center; gap: 5px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+
+<!-- Toast container -->
+<div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+<!-- ═══════════════════════ AUTH SCREEN ═══════════════════════ -->
+<div id="auth-screen" class="auth-bg min-h-screen flex items-center justify-center p-4">
+  <!-- Decorative blobs -->
+  <div style="position:absolute;top:10%;left:5%;width:300px;height:300px;background:radial-gradient(circle,rgba(99,102,241,0.15),transparent);border-radius:50%;pointer-events:none;"></div>
+  <div style="position:absolute;bottom:10%;right:5%;width:400px;height:400px;background:radial-gradient(circle,rgba(79,70,229,0.12),transparent);border-radius:50%;pointer-events:none;"></div>
+
+  <div class="w-full max-w-sm relative z-10">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style="background:linear-gradient(135deg,#6366f1,#4f46e5);box-shadow:0 8px 30px rgba(99,102,241,0.5);">
+        <i class="fas fa-layer-group text-white text-2xl"></i>
+      </div>
+      <h1 class="text-3xl font-bold text-white tracking-tight">ToolTrack</h1>
+      <p class="text-slate-400 text-sm mt-1.5">Subscription Intelligence Dashboard</p>
+    </div>
+
+    <div class="section-card p-8">
+      <!-- Tabs -->
+      <div class="flex bg-slate-100 rounded-xl p-1 mb-7 gap-1">
+        <button id="tab-login" onclick="switchTab('login')" class="flex-1 text-sm font-semibold py-2.5 rounded-lg bg-white shadow-sm text-slate-800 transition-all">Sign In</button>
+        <button id="tab-register" onclick="switchTab('register')" class="flex-1 text-sm font-semibold py-2.5 rounded-lg text-slate-400 transition-all">Register</button>
+      </div>
+
+      <!-- Login form -->
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="input-label">Email Address</label>
+          <div class="relative">
+            <i class="fas fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+            <input id="login-email" type="email" placeholder="you@company.com" required class="input-field pl-10">
+          </div>
+        </div>
+        <div>
+          <label class="input-label">Password</label>
+          <div class="relative">
+            <i class="fas fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+            <input id="login-password" type="password" placeholder="••••••••" required class="input-field pl-10">
+          </div>
+        </div>
+        <button type="submit" id="login-btn" class="btn btn-primary w-full justify-center py-3 text-sm mt-2">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+        <p id="login-error" class="text-red-500 text-xs text-center hidden"></p>
+      </form>
+
+      <!-- Register form -->
+      <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+        <div>
+          <label class="input-label">Email Address</label>
+          <div class="relative">
+            <i class="fas fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+            <input id="reg-email" type="email" placeholder="you@company.com" required class="input-field pl-10">
+          </div>
+        </div>
+        <div>
+          <label class="input-label">Password</label>
+          <div class="relative">
+            <i class="fas fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+            <input id="reg-password" type="password" placeholder="Min. 6 characters" required class="input-field pl-10">
+          </div>
+        </div>
+        <button type="submit" id="reg-btn" class="btn btn-primary w-full justify-center py-3 text-sm mt-2">
+          <i class="fas fa-user-plus"></i> Create Account
+        </button>
+        <p id="reg-error" class="text-red-500 text-xs text-center hidden"></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ MAIN APP ═══════════════════════ -->
+<div id="app-screen" class="hidden min-h-screen flex">
+
+  <!-- Sidebar -->
+  <aside class="sidebar w-60 flex-shrink-0 flex flex-col fixed top-0 left-0 bottom-0 z-40">
+    <!-- Logo -->
+    <div class="px-5 py-5 flex items-center gap-3 border-b border-white/10">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#6366f1,#4f46e5);box-shadow:0 4px 12px rgba(99,102,241,0.4);">
+        <i class="fas fa-layer-group text-white text-sm"></i>
+      </div>
+      <div>
+        <p class="text-white font-bold text-sm leading-none">ToolTrack</p>
+        <p class="text-slate-500 text-xs mt-0.5">Subscriptions</p>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 px-3 py-4 overflow-y-auto space-y-1">
+      <p class="nav-section-title">Overview</p>
+      <div class="nav-link active" onclick="showView('dashboard')" id="nav-dashboard">
+        <i class="fas fa-home"></i> Dashboard
+      </div>
+      <div class="nav-link" onclick="showView('analytics')" id="nav-analytics">
+        <i class="fas fa-chart-line"></i> Analytics
+      </div>
+      <p class="nav-section-title">Management</p>
+      <div class="nav-link" onclick="showView('subscriptions')" id="nav-subscriptions">
+        <i class="fas fa-cubes"></i> Subscriptions
+      </div>
+      <p class="nav-section-title">Assistant</p>
+      <div class="nav-link" onclick="showView('chat')" id="nav-chat">
+        <i class="fas fa-robot"></i> AI Chat
+        <span id="chat-badge" class="ml-auto hidden w-4 h-4 bg-indigo-500 text-white text-xs rounded-full flex items-center justify-center">!</span>
+      </div>
+    </nav>
+
+    <!-- User / Logout -->
+    <div class="px-3 py-4 border-t border-white/10">
+      <div class="flex items-center gap-3 px-2 mb-3">
+        <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" id="user-avatar">U</div>
+        <div class="min-w-0">
+          <p class="text-white text-xs font-semibold truncate" id="user-email-sidebar">user@email.com</p>
+          <p class="text-slate-500 text-xs">Administrator</p>
+        </div>
+      </div>
+      <div class="nav-link text-rose-400 hover:text-rose-300 hover:bg-rose-500/10" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Sign Out
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="ml-60 flex-1 flex flex-col min-h-screen">
+
+    <!-- Top bar -->
+    <div class="topbar sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800" id="page-title">Dashboard</h2>
+        <p class="text-xs text-slate-500" id="page-subtitle">Overview of your subscription portfolio</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="info-chip"><i class="fas fa-circle text-green-400" style="font-size:7px;"></i> Live</div>
+        <span class="text-xs text-slate-400" id="last-updated"></span>
+        <button onclick="refreshCurrentView()" class="btn btn-icon text-slate-500" title="Refresh">
+          <i class="fas fa-sync-alt text-sm" id="refresh-icon"></i>
+        </button>
+        <button onclick="showView('subscriptions'); openSubModal()" class="btn btn-primary text-xs py-2 px-4">
+          <i class="fas fa-plus"></i> Add Subscription
+        </button>
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="flex-1 p-6" id="page-content">
+
+      <!-- ═══ DASHBOARD VIEW ═══ -->
+      <div id="view-dashboard">
+        <!-- Alert banners -->
+        <div id="alert-area" class="space-y-3 mb-6"></div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+          <div class="kpi-card card-gradient-indigo">
+            <div class="flex items-start justify-between mb-3">
+              <div class="kpi-icon bg-white/20"><i class="fas fa-dollar-sign text-white text-lg"></i></div>
+              <span class="text-indigo-200 text-xs font-semibold">ANNUAL SPEND</span>
+            </div>
+            <p class="text-3xl font-bold text-white" id="kpi-annual">—</p>
+            <p class="text-indigo-200 text-xs mt-1" id="kpi-daily">—/day</p>
+          </div>
+          <div class="kpi-card card-gradient-emerald">
+            <div class="flex items-start justify-between mb-3">
+              <div class="kpi-icon bg-white/20"><i class="fas fa-check-circle text-white text-lg"></i></div>
+              <span class="text-emerald-200 text-xs font-semibold">ACTIVE TOOLS</span>
+            </div>
+            <p class="text-3xl font-bold text-white" id="kpi-active">—</p>
+            <p class="text-emerald-200 text-xs mt-1" id="kpi-total">— total</p>
+          </div>
+          <div class="kpi-card card-gradient-amber">
+            <div class="flex items-start justify-between mb-3">
+              <div class="kpi-icon bg-white/20"><i class="fas fa-clock text-white text-lg"></i></div>
+              <span class="text-amber-200 text-xs font-semibold">RENEWING SOON</span>
+            </div>
+            <p class="text-3xl font-bold text-white" id="kpi-renewing">—</p>
+            <p class="text-amber-200 text-xs mt-1">within 30 days</p>
+          </div>
+          <div class="kpi-card card-gradient-rose">
+            <div class="flex items-start justify-between mb-3">
+              <div class="kpi-icon bg-white/20"><i class="fas fa-exclamation-triangle text-white text-lg"></i></div>
+              <span class="text-rose-200 text-xs font-semibold">OVERDUE</span>
+            </div>
+            <p class="text-3xl font-bold text-white" id="kpi-overdue">—</p>
+            <p class="text-rose-200 text-xs mt-1">need attention</p>
+          </div>
+        </div>
+
+        <!-- Row 2: Charts + Side panels -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-5">
+          <!-- Category donut chart -->
+          <div class="section-card p-5 xl:col-span-1">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-800 text-sm">Spend by Category</h3>
+              <span class="text-xs text-slate-400">Monthly</span>
+            </div>
+            <div class="relative flex items-center justify-center" style="height:200px;">
+              <canvas id="chart-category" style="max-height:200px;"></canvas>
+              <div id="donut-center" class="absolute text-center pointer-events-none hidden">
+                <p class="text-xl font-bold text-slate-800" id="donut-total">$0</p>
+                <p class="text-xs text-slate-500">total</p>
+              </div>
+            </div>
+            <div id="category-legend" class="mt-3 space-y-1.5"></div>
+          </div>
+
+          <!-- Top 5 expensive -->
+          <div class="section-card p-5 xl:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-800 text-sm">Top Expenses</h3>
+              <span class="text-xs text-slate-400">Active subscriptions</span>
+            </div>
+            <div id="top5-list" class="space-y-2.5"></div>
+          </div>
+        </div>
+
+        <!-- Row 3: Upcoming + Overdue -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+          <!-- Upcoming 7 days -->
+          <div class="section-card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-800 text-sm">Renewing This Week</h3>
+              <span class="badge badge-active" id="7day-badge">0</span>
+            </div>
+            <div id="upcoming-list">
+              <div class="empty-state"><div class="icon"><i class="fas fa-calendar-check"></i></div><h3>All clear!</h3><p>No renewals in the next 7 days</p></div>
+            </div>
+          </div>
+
+          <!-- Overdue -->
+          <div class="section-card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-800 text-sm">Overdue Renewals</h3>
+              <span class="badge badge-cancelled" id="overdue-badge">0</span>
+            </div>
+            <div id="overdue-list">
+              <div class="empty-state"><div class="icon"><i class="fas fa-shield-check"></i></div><h3>No overdue!</h3><p>All subscriptions are up to date</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SUBSCRIPTIONS VIEW ═══ -->
+      <div id="view-subscriptions" class="hidden">
+        <!-- Filters bar -->
+        <div class="section-card p-4 mb-5">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-48">
+              <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+              <input id="filter-search" type="text" placeholder="Search tools..." class="input-field pl-9 py-2.5 text-xs" oninput="debounceLoadSubs()">
+            </div>
+            <select id="filter-status" class="input-field py-2.5 text-xs w-36" onchange="loadSubscriptions()">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <select id="filter-category" class="input-field py-2.5 text-xs w-40" onchange="loadSubscriptions()">
+              <option value="">All Categories</option>
+              <option value="DevOps">DevOps</option>
+              <option value="Communication">Communication</option>
+              <option value="Productivity">Productivity</option>
+              <option value="Security">Security</option>
+              <option value="Analytics">Analytics</option>
+              <option value="Design">Design</option>
+              <option value="Other">Other</option>
+            </select>
+            <select id="filter-billing" class="input-field py-2.5 text-xs w-36" onchange="loadSubscriptions()">
+              <option value="">All Billing</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+            <select id="filter-sort" class="input-field py-2.5 text-xs w-40" onchange="loadSubscriptions()">
+              <option value="created_at|desc">Newest First</option>
+              <option value="cost|desc">Highest Cost</option>
+              <option value="cost|asc">Lowest Cost</option>
+              <option value="renewal_date|asc">Renewal Date</option>
+              <option value="tool_name|asc">Name A–Z</option>
+            </select>
+            <button onclick="clearFilters()" class="btn btn-secondary text-xs py-2.5 px-4">
+              <i class="fas fa-times"></i> Clear
+            </button>
+            <button onclick="openSubModal()" class="btn btn-primary text-xs py-2.5 px-4 ml-auto">
+              <i class="fas fa-plus"></i> Add New
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="section-card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Tool</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Billing</th>
+                  <th>Cost</th>
+                  <th>Renewal Date</th>
+                  <th>Days Left</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="subs-tbody">
+                <tr><td colspan="8"><div class="empty-state"><div class="icon"><i class="fas fa-cube"></i></div><h3>Loading subscriptions...</h3></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div class="flex items-center justify-between px-5 py-3.5 border-t border-slate-100">
+            <span class="text-xs text-slate-500" id="subs-count">0 subscriptions</span>
+            <div class="flex items-center gap-1" id="pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ANALYTICS VIEW ═══ -->
+      <div id="view-analytics" class="hidden">
+        <!-- Summary KPIs -->
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+          <div class="kpi-card card-gradient-blue">
+            <div class="kpi-icon bg-white/20 mb-3"><i class="fas fa-calendar-alt text-white"></i></div>
+            <p class="text-2xl font-bold text-white" id="ana-monthly">—</p>
+            <p class="text-blue-200 text-xs mt-1">Monthly Spend</p>
+          </div>
+          <div class="kpi-card card-gradient-violet">
+            <div class="kpi-icon bg-white/20 mb-3"><i class="fas fa-calendar-week text-white"></i></div>
+            <p class="text-2xl font-bold text-white" id="ana-yearly">—</p>
+            <p class="text-violet-200 text-xs mt-1">Yearly Subscriptions Cost</p>
+          </div>
+          <div class="kpi-card card-gradient-emerald">
+            <div class="kpi-icon bg-white/20 mb-3"><i class="fas fa-coins text-white"></i></div>
+            <p class="text-2xl font-bold text-white" id="ana-daily">—</p>
+            <p class="text-emerald-200 text-xs mt-1">Daily Cost</p>
+          </div>
+          <div class="kpi-card card-gradient-amber">
+            <div class="kpi-icon bg-white/20 mb-3"><i class="fas fa-hourglass-half text-white"></i></div>
+            <p class="text-2xl font-bold text-white" id="ana-due30">—</p>
+            <p class="text-amber-200 text-xs mt-1">Due in 30 Days</p>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-5">
+          <!-- Monthly trend -->
+          <div class="section-card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-800 text-sm">Monthly Spend Trend</h3>
+              <span class="text-xs text-slate-400">By subscription add date</span>
+            </div>
+            <div style="height:220px;"><canvas id="chart-trend"></canvas></div>
+          </div>
+          <!-- Renewal density -->
+          <div class="section-card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-800 text-sm">Renewal Density</h3>
+              <span class="text-xs text-slate-400">Renewals per month</span>
+            </div>
+            <div style="height:220px;"><canvas id="chart-density"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Cost optimization tips -->
+        <div class="section-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-slate-800 text-sm">Cost Optimization Tips</h3>
+            <span id="tips-count" class="badge badge-monthly">0 tips</span>
+          </div>
+          <div id="tips-list" class="space-y-3">
+            <div class="empty-state"><div class="icon"><i class="fas fa-lightbulb"></i></div><h3>Loading tips...</h3></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ CHAT VIEW ═══ -->
+      <div id="view-chat" class="hidden flex flex-col" style="height: calc(100vh - 80px);">
+        <!-- Chat header -->
+        <div class="section-card p-4 mb-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl flex items-center justify-center" style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
+              <i class="fas fa-robot text-white text-sm"></i>
+            </div>
+            <div>
+              <p class="font-bold text-slate-800 text-sm">AI Subscription Assistant</p>
+              <p class="text-xs text-slate-500">Groq</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="info-chip"><i class="fas fa-circle text-green-400" style="font-size:7px;"></i> Online</div>
+            <button onclick="clearChatHistory()" class="btn btn-secondary text-xs py-2 px-3">
+              <i class="fas fa-trash-alt"></i> Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick prompts -->
+        <div class="mb-4 flex flex-wrap gap-2 overflow-x-auto pb-1" id="quick-prompts"></div>
+
+        <!-- Messages -->
+        <div class="section-card flex-1 p-4 overflow-y-auto flex flex-col gap-3 mb-4" id="chat-messages" style="min-height:200px;">
+          <div class="flex flex-col items-center justify-center h-full text-center py-12">
+            <div style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;box-shadow:0 6px 20px rgba(99,102,241,0.3);">
+              <i class="fas fa-robot text-white text-xl"></i>
+            </div>
+            <h3 class="text-slate-700 font-semibold text-sm mb-1">Ask me anything about your subscriptions</h3>
+            <p class="text-slate-400 text-xs">Use the quick prompts above or type your own question</p>
+          </div>
+        </div>
+
+        <!-- Input area -->
+        <div class="section-card p-3 flex items-end gap-3">
+          <textarea id="chat-input" class="flex-1 input-field resize-none text-sm" rows="2" placeholder="Ask about costs, renewals, alternatives..." onkeydown="handleChatKey(event)"></textarea>
+          <button id="chat-send-btn" onclick="sendChat()" class="btn btn-primary text-sm py-3 px-5 self-end">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════════ SUBSCRIPTION MODAL ═══════════════════════ -->
+<div id="sub-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-lg p-7">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800" id="modal-title">Add Subscription</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Fill in the subscription details</p>
+      </div>
+      <button onclick="closeSubModal()" class="btn btn-icon text-slate-400 hover:text-slate-600"><i class="fas fa-times text-base"></i></button>
+    </div>
+    <form id="sub-form" onsubmit="saveSubscription(event)" class="space-y-4">
+      <input type="hidden" id="sub-id">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="input-label">Tool / Service Name *</label>
+          <input id="sub-name" type="text" placeholder="e.g., GitHub, Slack, AWS" required class="input-field">
+        </div>
+        <div>
+          <label class="input-label">Category *</label>
+          <select id="sub-category" class="input-field" required>
+            <option value="">Select category</option>
+            <option value="DevOps">DevOps</option>
+            <option value="Communication">Communication</option>
+            <option value="Productivity">Productivity</option>
+            <option value="Security">Security</option>
+            <option value="Analytics">Analytics</option>
+            <option value="Design">Design</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="input-label">Status *</label>
+          <select id="sub-status" class="input-field" required>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div>
+          <label class="input-label">Billing Cycle *</label>
+          <select id="sub-billing" class="input-field" required>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div>
+          <label class="input-label">Cost ($) *</label>
+          <input id="sub-cost" type="number" step="0.01" min="0" placeholder="0.00" required class="input-field">
+        </div>
+        <div>
+          <label class="input-label">Purchase Date *</label>
+          <input id="sub-purchase" type="date" required class="input-field">
+        </div>
+        <div>
+          <label class="input-label">Renewal Date *</label>
+          <input id="sub-renewal" type="date" required class="input-field">
+        </div>
+        <div class="col-span-2">
+          <label class="input-label">Description (optional)</label>
+          <textarea id="sub-desc" rows="2" class="input-field resize-none" placeholder="Brief notes about this subscription..."></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeSubModal()" class="btn btn-secondary flex-1 justify-center">Cancel</button>
+        <button type="submit" id="save-btn" class="btn btn-primary flex-1 justify-center">
+          <i class="fas fa-save"></i> <span id="save-btn-text">Save Subscription</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DELETE CONFIRM MODAL ═══════════════════════ -->
+<div id="del-modal" class="modal-overlay hidden">
+  <div class="modal-box w-full max-w-sm p-7 text-center">
+    <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <i class="fas fa-trash-alt text-red-500 text-xl"></i>
+    </div>
+    <h3 class="text-lg font-bold text-slate-800 mb-2">Delete Subscription</h3>
+    <p class="text-slate-500 text-sm mb-6">Are you sure you want to delete <strong id="del-name" class="text-slate-700"></strong>? This action cannot be undone.</p>
+    <div class="flex gap-3">
+      <button onclick="closeDelModal()" class="btn btn-secondary flex-1 justify-center">Cancel</button>
+      <button onclick="confirmDelete()" class="btn flex-1 justify-center bg-red-500 hover:bg-red-600 text-white" style="border-radius:10px;">
+        <i class="fas fa-trash-alt"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  CONFIG & STATE
+// ═══════════════════════════════════════════════════════
+const API = 'http://localhost:8000';
+let token = localStorage.getItem('tt_token');
+let currentUser = null;
+let deleteTargetId = null;
+let subsPage = 1;
+const PALETTE = ['#6366f1','#10b981','#f59e0b','#3b82f6','#f43f5e','#8b5cf6','#06b6d4','#84cc16'];
+let chartCategory = null, chartTrend = null, chartDensity = null;
+let debounceTimer = null;
+let chatInitialized = false;
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+  const res = await fetch(API + path, { headers, ...opts });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || 'Request failed');
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+function toast(msg, type = 'success') {
+  const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `<i class="fas ${icons[type]}"></i><span>${msg}</span>`;
+  $('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3800);
+}
+
+function fmt$(n) { return '$' + (parseFloat(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtDate(d) { if (!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+
+function daysClass(days) {
+  if (days < 0) return 'renewal-urgent';
+  if (days <= 7) return 'renewal-urgent';
+  if (days <= 30) return 'renewal-soon';
+  return 'renewal-ok';
+}
+
+function daysLabel(days) {
+  if (days < 0) return `${Math.abs(days)}d overdue`;
+  if (days === 0) return 'Today';
+  return `${days}d`;
+}
+
+function setLoading(btnId, loading, text) {
+  const btn = $(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.innerHTML = loading ? `<i class="fas fa-circle-notch spin"></i> ${text || 'Loading...'}` : btn.dataset.orig || btn.innerHTML;
+}
+
+// ═══════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  $('login-form').classList.toggle('hidden', !isLogin);
+  $('register-form').classList.toggle('hidden', isLogin);
+  ['tab-login', 'tab-register'].forEach(id => {
+    const el = $(id);
+    const active = id === `tab-${tab}`;
+    el.className = `flex-1 text-sm font-semibold py-2.5 rounded-lg transition-all ${active ? 'bg-white shadow-sm text-slate-800' : 'text-slate-400'}`;
+  });
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  $('login-error').classList.add('hidden');
+  $('login-btn').disabled = true;
+  $('login-btn').innerHTML = '<i class="fas fa-circle-notch spin"></i> Signing in...';
+  try {
+    const data = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email: $('login-email').value, password: $('login-password').value }) });
+    token = data.access_token;
+    localStorage.setItem('tt_token', token);
+    await initApp();
+  } catch (err) {
+    $('login-error').textContent = err.message;
+    $('login-error').classList.remove('hidden');
+  } finally {
+    $('login-btn').disabled = false;
+    $('login-btn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  $('reg-error').classList.add('hidden');
+  $('reg-btn').disabled = true;
+  $('reg-btn').innerHTML = '<i class="fas fa-circle-notch spin"></i> Creating account...';
+  try {
+    const data = await api('/auth/register', { method: 'POST', body: JSON.stringify({ email: $('reg-email').value, password: $('reg-password').value }) });
+    token = data.access_token;
+    localStorage.setItem('tt_token', token);
+    toast('Account created! Welcome to ToolTrack.', 'success');
+    await initApp();
+  } catch (err) {
+    $('reg-error').textContent = err.message;
+    $('reg-error').classList.remove('hidden');
+  } finally {
+    $('reg-btn').disabled = false;
+    $('reg-btn').innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+  }
+}
+
+function logout() {
+  token = null;
+  localStorage.removeItem('tt_token');
+  $('auth-screen').classList.remove('hidden');
+  $('app-screen').classList.add('hidden');
+  chatInitialized = false;
+}
+
+async function initApp() {
+  try {
+    currentUser = await api('/auth/me');
+    $('user-email-sidebar').textContent = currentUser.email;
+    $('user-avatar').textContent = currentUser.email[0].toUpperCase();
+    $('auth-screen').classList.add('hidden');
+    $('app-screen').classList.remove('hidden');
+    showView('dashboard');
+  } catch { logout(); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+const PAGE_META = {
+  dashboard: { title: 'Dashboard', subtitle: 'Overview of your subscription portfolio' },
+  subscriptions: { title: 'Subscriptions', subtitle: 'Manage all your software tools' },
+  analytics: { title: 'Analytics', subtitle: 'Spend trends, optimization & insights' },
+  chat: { title: 'AI Assistant', subtitle: 'Ask questions in natural language' },
+};
+
+function showView(view) {
+  ['dashboard', 'subscriptions', 'analytics', 'chat'].forEach(v => {
+    $(`view-${v}`).classList.toggle('hidden', v !== view);
+    $(`nav-${v}`).classList.toggle('active', v === view);
+  });
+  const meta = PAGE_META[view] || {};
+  $('page-title').textContent = meta.title || view;
+  $('page-subtitle').textContent = meta.subtitle || '';
+  if (view === 'dashboard') loadDashboard();
+  else if (view === 'subscriptions') { subsPage = 1; loadSubscriptions(); }
+  else if (view === 'analytics') loadAnalytics();
+  else if (view === 'chat') loadChat();
+}
+
+function refreshCurrentView() {
+  const active = ['dashboard','subscriptions','analytics','chat'].find(v => !$(`view-${v}`).classList.contains('hidden'));
+  if (active) { const ri = $('refresh-icon'); ri.classList.add('spin'); setTimeout(() => ri.classList.remove('spin'), 800); showView(active); }
+}
+
+function updateTimestamp() {
+  $('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ═══════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const d = await api('/dashboard/');
+
+    // KPI cards — use correct field names from DashboardOut schema
+    const dailyCost = d.total_annual_cost / 365;
+    $('kpi-annual').textContent = fmt$(d.total_annual_cost);
+    $('kpi-daily').textContent = `${fmt$(dailyCost)}/day`;
+    $('kpi-active').textContent = d.active_subscriptions;
+    $('kpi-total').textContent = `${d.total_subscriptions} total`;
+    $('kpi-renewing').textContent = d.upcoming_renewals_30_days.length;
+    $('kpi-overdue').textContent = d.overdue_subscriptions.length;
+
+    // Alert banners
+    const alertArea = $('alert-area');
+    alertArea.innerHTML = '';
+    const overdueCount = d.overdue_subscriptions.length;
+    const upcoming7 = d.upcoming_renewals_7_days;
+    if (overdueCount > 0) alertArea.innerHTML += `<div class="alert-banner alert-danger"><i class="fas fa-exclamation-circle mt-0.5"></i><span><strong>${overdueCount} overdue</strong> subscription${overdueCount > 1 ? 's' : ''} need immediate attention — renewal date has passed.</span></div>`;
+    if (upcoming7.length > 0) alertArea.innerHTML += `<div class="alert-banner alert-warning"><i class="fas fa-clock mt-0.5"></i><span><strong>${upcoming7.length} subscription${upcoming7.length > 1 ? 's' : ''}</strong> renewing within 7 days. Total: ${fmt$(upcoming7.reduce((a, s) => a + s.cost, 0))}</span></div>`;
+
+    // Category donut chart — spend_by_category is List[{category, total_cost, ...}]
+    const catList = d.spend_by_category || [];
+    const catLabels = catList.map(c => c.category);
+    const catValues = catList.map(c => c.total_cost);
+    const totalCat = catValues.reduce((a, b) => a + b, 0);
+    if (chartCategory) chartCategory.destroy();
+    if (catLabels.length > 0) {
+      chartCategory = new Chart($('chart-category'), {
+        type: 'doughnut',
+        data: { labels: catLabels, datasets: [{ data: catValues, backgroundColor: PALETTE.slice(0, catLabels.length), borderWidth: 0, hoverOffset: 6 }] },
+        options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmt$(ctx.raw)}` } } }, animation: { duration: 600 } }
+      });
+      $('donut-center').classList.remove('hidden');
+      $('donut-total').textContent = fmt$(totalCat);
+      $('category-legend').innerHTML = catLabels.map((l, i) => `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2"><span style="width:10px;height:10px;border-radius:3px;background:${PALETTE[i]};display:inline-block;flex-shrink:0;"></span><span class="text-xs text-slate-600">${l}</span></div>
+          <span class="text-xs font-semibold text-slate-700">${fmt$(catValues[i])}</span>
+        </div>`).join('');
+    } else {
+      $('donut-center').classList.add('hidden');
+      $('category-legend').innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No data yet</p>';
+    }
+
+    // Top 5 expensive — field is top_5_expensive, each item is SubscriptionOut with tool_name
+    const top5 = d.top_5_expensive || [];
+    const maxCost = top5.length ? top5[0].cost : 1;
+    $('top5-list').innerHTML = top5.length ? top5.map((s, i) => `
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2">
+            <span class="w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style="background:${PALETTE[i]};font-size:10px;">${i+1}</span>
+            <span class="text-sm font-semibold text-slate-700">${s.tool_name}</span>
+            <span class="badge badge-${s.billing_cycle}">${s.billing_cycle}</span>
+          </div>
+          <span class="text-sm font-bold text-slate-800">${fmt$(s.cost)}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${(s.cost/maxCost*100).toFixed(1)}%;background:${PALETTE[i]};"></div></div>
+      </div>`).join('') : '<div class="empty-state"><div class="icon"><i class="fas fa-list"></i></div><h3>No subscriptions yet</h3><p>Add a subscription to see insights</p></div>';
+
+    // Upcoming 7 days — field is upcoming_renewals_7_days, each item has tool_name
+    $('7day-badge').textContent = upcoming7.length;
+    $('upcoming-list').innerHTML = upcoming7.length ? upcoming7.map(s => `
+      <div class="stat-row">
+        <div><p class="text-sm font-semibold text-slate-700">${s.tool_name}</p><p class="text-xs text-slate-400">${fmtDate(s.renewal_date)}</p></div>
+        <div class="text-right"><p class="text-sm font-bold text-amber-600">${fmt$(s.cost)}</p><p class="text-xs text-slate-400">${s.days_until_renewal}d left</p></div>
+      </div>`).join('') : '<div class="empty-state"><div class="icon"><i class="fas fa-calendar-check"></i></div><h3>All clear!</h3><p>No renewals this week</p></div>';
+
+    // Overdue — field is overdue_subscriptions, each item has tool_name + days_overdue
+    const overdueList = d.overdue_subscriptions || [];
+    $('overdue-badge').textContent = overdueList.length;
+    $('overdue-list').innerHTML = overdueList.length ? overdueList.map(s => `
+      <div class="stat-row">
+        <div><p class="text-sm font-semibold text-slate-700">${s.tool_name}</p><p class="text-xs text-red-400"><i class="fas fa-exclamation-circle"></i> ${s.days_overdue}d overdue — was due ${fmtDate(s.renewal_date)}</p></div>
+        <span class="badge badge-cancelled">Overdue</span>
+      </div>`).join('') : '<div class="empty-state"><div class="icon"><i class="fas fa-shield-check"></i></div><h3>No overdue!</h3><p>All subscriptions are current</p></div>';
+
+    updateTimestamp();
+  } catch (err) { toast('Failed to load dashboard: ' + err.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  SUBSCRIPTIONS
+// ═══════════════════════════════════════════════════════
+function debounceLoadSubs() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { subsPage = 1; loadSubscriptions(); }, 350); }
+
+function clearFilters() {
+  $('filter-search').value = '';
+  $('filter-status').value = '';
+  $('filter-category').value = '';
+  $('filter-billing').value = '';
+  $('filter-sort').value = 'created_at|desc';
+  subsPage = 1; loadSubscriptions();
+}
+
+async function loadSubscriptions() {
+  const search = $('filter-search').value;
+  const status = $('filter-status').value;
+  const category = $('filter-category').value;
+  const billing = $('filter-billing').value;
+  const [sort_by, sort_order] = ($('filter-sort').value || 'created_at|desc').split('|');
+  const qs = new URLSearchParams({ page: subsPage, page_size: 20, sort_by, sort_order });
+  if (search) qs.set('search', search);
+  if (status) qs.set('status', status);
+  if (category) qs.set('category', category);
+  if (billing) qs.set('billing_cycle', billing);
+  try {
+    const data = await api(`/subscriptions/?${qs}`);
+    const subs = Array.isArray(data) ? data : (data.items || data);
+    renderSubsTable(subs);
+    $('subs-count').textContent = `${subs.length} subscription${subs.length !== 1 ? 's' : ''}`;
+    updateTimestamp();
+  } catch (err) {
+    $('subs-tbody').innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon"><i class="fas fa-exclamation-triangle"></i></div><h3>Error loading data</h3><p>${err.message}</p></div></td></tr>`;
+  }
+}
+
+function renderSubsTable(subs) {
+  if (!subs.length) {
+    $('subs-tbody').innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon"><i class="fas fa-cube"></i></div><h3>No subscriptions found</h3><p>Add your first subscription to get started</p></div></td></tr>`;
+    return;
+  }
+  $('subs-tbody').innerHTML = subs.map(s => {
+    const days = s.days_until_renewal;
+    return `<tr>
+      <td><div class="font-semibold text-slate-800 text-sm">${s.tool_name}</div>${s.description ? `<div class="text-xs text-slate-400 mt-0.5 truncate max-w-xs">${s.description}</div>` : ''}</td>
+      <td><span class="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">${s.category}</span></td>
+      <td><span class="badge badge-${s.status}">${s.status}</span></td>
+      <td><span class="badge badge-${s.billing_cycle}">${s.billing_cycle}</span></td>
+      <td><span class="font-bold text-slate-800 text-sm">${fmt$(s.cost)}</span></td>
+      <td><span class="text-sm text-slate-600">${fmtDate(s.renewal_date)}</span></td>
+      <td><span class="text-sm font-semibold ${daysClass(days)}">${daysLabel(days)}</span></td>
+      <td>
+        <div class="flex items-center justify-end gap-1.5">
+          <button class="btn btn-sm-edit btn" onclick="openSubModal(${JSON.stringify(s).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i> Edit</button>
+          <button class="btn btn-sm-del btn" onclick="openDelModal(${s.id}, '${s.tool_name.replace(/'/g,"\\'")}')"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openSubModal(sub = null) {
+  $('sub-form').reset();
+  $('sub-id').value = '';
+  $('modal-title').textContent = sub ? 'Edit Subscription' : 'Add Subscription';
+  $('save-btn-text').textContent = sub ? 'Update' : 'Save Subscription';
+  if (sub) {
+    $('sub-id').value = sub.id;
+    $('sub-name').value = sub.tool_name || '';
+    $('sub-category').value = sub.category || '';
+    $('sub-status').value = sub.status || 'active';
+    $('sub-billing').value = sub.billing_cycle || 'monthly';
+    $('sub-cost').value = sub.cost || '';
+    $('sub-purchase').value = sub.purchase_date || '';
+    $('sub-renewal').value = sub.renewal_date || '';
+    $('sub-desc').value = sub.description || '';
+  } else {
+    const today = new Date().toISOString().split('T')[0];
+    $('sub-purchase').value = today;
+    $('sub-status').value = 'active';
+    $('sub-billing').value = 'monthly';
+  }
+  $('sub-modal').classList.remove('hidden');
+}
+
+function closeSubModal() { $('sub-modal').classList.add('hidden'); }
+
+async function saveSubscription(e) {
+  e.preventDefault();
+  const id = $('sub-id').value;
+  const payload = {
+    tool_name: $('sub-name').value,
+    category: $('sub-category').value,
+    status: $('sub-status').value,
+    billing_cycle: $('sub-billing').value,
+    cost: parseFloat($('sub-cost').value),
+    purchase_date: $('sub-purchase').value,
+    renewal_date: $('sub-renewal').value,
+    description: $('sub-desc').value || null,
+  };
+  const saveBtnOrig = $('save-btn').innerHTML;
+  $('save-btn').disabled = true;
+  $('save-btn').innerHTML = '<i class="fas fa-circle-notch spin"></i> Saving...';
+  try {
+    if (id) {
+      await api(`/subscriptions/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      toast('Subscription updated!', 'success');
+    } else {
+      await api('/subscriptions/', { method: 'POST', body: JSON.stringify(payload) });
+      toast('Subscription added!', 'success');
+    }
+    closeSubModal();
+    loadSubscriptions();
+  } catch (err) { toast('Error: ' + err.message, 'error'); }
+  finally { $('save-btn').disabled = false; $('save-btn').innerHTML = saveBtnOrig; }
+}
+
+function openDelModal(id, name) { deleteTargetId = id; $('del-name').textContent = name; $('del-modal').classList.remove('hidden'); }
+function closeDelModal() { $('del-modal').classList.add('hidden'); deleteTargetId = null; }
+
+async function confirmDelete() {
+  try {
+    await api(`/subscriptions/${deleteTargetId}`, { method: 'DELETE' });
+    toast('Subscription deleted.', 'info');
+    closeDelModal();
+    loadSubscriptions();
+  } catch (err) { toast('Error: ' + err.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  ANALYTICS
+// ═══════════════════════════════════════════════════════
+async function loadAnalytics() {
+  try {
+    const [summary, deep] = await Promise.all([api('/analytics/summary'), api('/analytics/')]);
+
+    $('ana-monthly').textContent = fmt$(summary.monthly_spend);
+    $('ana-yearly').textContent = fmt$(summary.yearly_spend);
+    $('ana-daily').textContent = fmt$(summary.daily_cost);
+    $('ana-due30').textContent = summary.tools_renewing_in_30_days + ' tools';
+
+    // Monthly trend line chart
+    const trend = deep.monthly_spend_trend || [];
+    if (chartTrend) chartTrend.destroy();
+    if (trend.length) {
+      chartTrend = new Chart($('chart-trend'), {
+        type: 'line',
+        data: {
+          labels: trend.map(t => t.month),
+          datasets: [{ label: 'Monthly Spend ($)', data: trend.map(t => t.total_cost), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', tension: 0.45, fill: true, pointBackgroundColor: '#6366f1', pointRadius: 4, borderWidth: 2.5 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#f1f5f9' }, ticks: { callback: v => '$' + v } }, x: { grid: { display: false } } } }
+      });
+    }
+
+    // Renewal density bar chart
+    const density = deep.renewal_density || {};
+    if (chartDensity) chartDensity.destroy();
+    const dKeys = Object.keys(density).slice(0, 12);
+    if (dKeys.length) {
+      chartDensity = new Chart($('chart-density'), {
+        type: 'bar',
+        data: {
+          labels: dKeys,
+          datasets: [{ label: 'Renewals', data: dKeys.map(k => density[k]), backgroundColor: dKeys.map((_, i) => PALETTE[i % PALETTE.length] + 'cc'), borderRadius: 6, borderSkipped: false }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } }
+      });
+    }
+
+    // Optimization tips
+    const tips = deep.cost_optimization_tips || [];
+    $('tips-count').textContent = `${tips.length} tip${tips.length !== 1 ? 's' : ''}`;
+    if (tips.length) {
+      $('tips-list').innerHTML = tips.map(t => `
+        <div class="flex items-start gap-4 p-4 rounded-14 border border-slate-100 bg-slate-50/60 hover:bg-white transition-colors" style="border-radius:12px;">
+          <div class="w-9 h-9 rounded-11 flex items-center justify-center flex-shrink-0 ${t.potential_savings > 0 ? 'bg-emerald-100' : 'bg-amber-100'}" style="border-radius:11px;">
+            <i class="fas ${t.potential_savings > 0 ? 'fa-piggy-bank text-emerald-600' : 'fa-search-dollar text-amber-600'} text-sm"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="font-bold text-slate-800 text-sm">${t.tool_name}</span>
+              <span class="badge badge-${t.billing_cycle}">${t.billing_cycle}</span>
+              ${t.potential_savings > 0 ? `<span class="badge" style="background:#dcfce7;color:#15803d;">Save ${fmt$(t.potential_savings)}/yr</span>` : ''}
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">${t.suggestion}</p>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <p class="text-sm font-bold text-slate-800">${fmt$(t.current_cost)}</p>
+            <p class="text-xs text-slate-400">${t.billing_cycle}</p>
+          </div>
+        </div>`).join('');
+    } else {
+      $('tips-list').innerHTML = '<div class="empty-state"><div class="icon"><i class="fas fa-check-circle"></i></div><h3>No tips available</h3><p>Add more subscriptions to unlock insights</p></div>';
+    }
+
+    updateTimestamp();
+  } catch (err) { toast('Failed to load analytics: ' + err.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  CHAT
+// ═══════════════════════════════════════════════════════
+async function loadChat() {
+  if (!chatInitialized) {
+    chatInitialized = true;
+    // Load quick prompts — each item is {label, prompt, description}
+    try {
+      const prompts = await api('/chat/prompts');
+      $('quick-prompts').innerHTML = (prompts || []).map(p =>
+        `<button class="prompt-chip" onclick="usePrompt(${JSON.stringify(p.prompt)})" title="${escHtml(p.description)}">${escHtml(p.label)}</button>`
+      ).join('');
+    } catch {}
+    // Load history
+    try {
+      const hist = await api('/chat/history');
+      const msgs = hist.messages || hist || [];
+      if (msgs.length) {
+        $('chat-messages').innerHTML = '';
+        msgs.forEach(m => appendMessage(m.role, m.content));
+      }
+    } catch {}
+  }
+}
+
+function usePrompt(prompt) {
+  $('chat-input').value = prompt;
+  $('chat-input').focus();
+}
+
+function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }
+
+function appendMessage(role, content, isTyping = false) {
+  const msgs = $('chat-messages');
+  // Remove welcome placeholder if present
+  const placeholder = msgs.querySelector('.flex.flex-col.items-center');
+  if (placeholder) placeholder.remove();
+
+  const el = document.createElement('div');
+  el.className = 'flex flex-col ' + (role === 'user' ? 'items-end' : 'items-start');
+  if (isTyping) el.id = 'typing-indicator';
+  const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  if (role === 'user') {
+    el.innerHTML = `<div class="msg-user">${escHtml(content)}</div><div class="msg-time">${time}</div>`;
+  } else if (isTyping) {
+    el.innerHTML = `<div class="msg-bot"><div class="flex items-center gap-1.5 py-1"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  } else {
+    el.innerHTML = `<div class="msg-bot">${formatBotMsg(content)}</div><div class="msg-time">${time}</div>`;
+  }
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+function formatBotMsg(s) {
+  return escHtml(s)
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:12px;font-family:monospace;">$1</code>')
+    .replace(/\n/g, '<br>');
+}
+
+async function sendChat() {
+  const input = $('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  $('chat-send-btn').disabled = true;
+  appendMessage('user', msg);
+  const typing = appendMessage('bot', '', true);
+  try {
+    const res = await api('/chat/', { method: 'POST', body: JSON.stringify({ message: msg }) });
+    typing.remove();
+    appendMessage('bot', res.reply || res.message || 'No response.');
+  } catch (err) {
+    typing.remove();
+    appendMessage('bot', 'Sorry, something went wrong. Please try again.');
+    toast('Chat error: ' + err.message, 'error');
+  } finally { $('chat-send-btn').disabled = false; }
+}
+
+async function clearChatHistory() {
+  try {
+    await api('/chat/history', { method: 'DELETE' });
+    $('chat-messages').innerHTML = `
+      <div class="flex flex-col items-center justify-center h-full text-center py-12">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;box-shadow:0 6px 20px rgba(99,102,241,0.3);">
+          <i class="fas fa-robot text-white text-xl"></i>
+        </div>
+        <h3 class="text-slate-700 font-semibold text-sm mb-1">Conversation cleared</h3>
+        <p class="text-slate-400 text-xs">Start a new conversation</p>
+      </div>`;
+    toast('Chat history cleared.', 'info');
+    chatInitialized = false;
+    loadChat();
+  } catch (err) { toast('Error: ' + err.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  // Close modals on overlay click
+  $('sub-modal').addEventListener('click', e => { if (e.target === $('sub-modal')) closeSubModal(); });
+  $('del-modal').addEventListener('click', e => { if (e.target === $('del-modal')) closeDelModal(); });
+
+  if (token) {
+    try { await initApp(); }
+    catch { token = null; localStorage.removeItem('tt_token'); }
+  }
+});
+</script>
+</body>
+</html>
